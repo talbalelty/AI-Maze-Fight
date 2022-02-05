@@ -17,7 +17,13 @@ Cell::Cell(const Cell& other) {
 	f = h + g;
 }
 
-Cell::Cell(int r, int c,int tr, int tc,double g,Cell * p)
+Cell::Cell(int r, int c, Cell* p) {
+	row = r;
+	col = c;
+	parent = p;
+}
+
+Cell::Cell(int r, int c,int tr, int tc,double g, Cell * p)
 {
 	row = r;
 	col = c;
@@ -34,6 +40,17 @@ Cell::Cell(int r, int c)
 	row = r;
 	col = c;
 }
+
+int Cell::ManhattanDistance(int tRow, int tCol)
+{
+	return abs(tRow - row) + abs(tCol - col);
+}
+
+void Cell::computeH(Cell* target)
+{
+	h += ManhattanDistance(target->getRow(), target->getCol());	
+}
+
 Cell::~Cell()
 {
 }

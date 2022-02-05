@@ -1,5 +1,6 @@
 #pragma once
 #include "Cell.h"
+#include <math.h>
 
 #define WALK 0
 #define FIGHT 1

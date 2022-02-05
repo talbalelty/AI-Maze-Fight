@@ -125,6 +125,7 @@
     <ClCompile Include="Crate.cpp" />
     <ClCompile Include="Grenade.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MyCompareCells.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Room.cpp" />
   </ItemGroup>
@@ -137,6 +138,7 @@
     <ClInclude Include="Definitions.h" />
     <ClInclude Include="glut.h" />
     <ClInclude Include="Grenade.h" />
+    <ClInclude Include="MyCompareCells.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Room.h" />
   </ItemGroup>

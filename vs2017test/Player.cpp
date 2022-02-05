@@ -1,5 +1,4 @@
 #include "Player.h"
-#include <math.h>
 
 Player::Player() {
 	health = 10;

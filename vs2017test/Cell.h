@@ -12,6 +12,7 @@ private:
 public:
 	Cell();
 	Cell(const Cell& other);
+	Cell(int r, int c, Cell* p);
 	Cell(int r, int c, int tr, int tc, double g, Cell * p);
 	Cell(int r, int c);
 	~Cell();
@@ -26,7 +27,9 @@ public:
 	bool operator == (const Cell &other) { return other.col == col && other.row == row; }
 	void setG(double newG) { g = newG; }
 	void setF(double newF) { f = newF; }
+	void setF() { f = h + g; }
 	Cell* getParent() { return parent; }
-
+	int ManhattanDistance(int tRow, int tCol);
+	void computeH(Cell* target);
 };
 

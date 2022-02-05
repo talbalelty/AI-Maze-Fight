@@ -22,6 +22,7 @@ void InitRooms();
 void DigTunnels();
 Bullet* pb = nullptr;
 Grenade* pg = nullptr;
+Arena* arena;
 
 void init()
 {
@@ -36,9 +37,7 @@ void init()
 	InitMaze();
 	InitRooms();
 	DigTunnels();
-	initCrates(rooms, &maze);
-	initTeams(rooms, &maze);
-	findOpponents();
+	arena = new Arena(&maze, &rooms);
 }
 
 void FillRoom(int index) 
@@ -336,8 +335,10 @@ void idle()
 		pb->move(maze);
 	if (pg && pg->getIsExploded())
 		pg->explode(maze);
-
+	
 	// if something iteration()
+
+	arena->iteration();
 
 	glutPostRedisplay(); // indirect call to display
 }

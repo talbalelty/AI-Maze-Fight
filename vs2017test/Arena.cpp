@@ -1,30 +1,16 @@
-#include "glut.h"
-#include <time.h>
-#include <vector>
-#include <queue>
-#include <iostream>
-#include "Cell.h"
-#include "Room.h"
-#include "CompareCells.h"
-#include "Bullet.h"
-#include "Grenade.h"
-#include "Definitions.h"
-#include "Player.h"
 #include "Arena.h"
-#include "Crate.h"
 
-using namespace std;
+Arena::Arena(int (*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS]) {
+	maze = _maze;
+	rooms = _rooms;
+	initCrates();
+	initTeams();
+	findOpponents();
+}
 
-const int TEAM_SIZE = 3;
-
-vector<Player*> team1;
-vector<Player*> team2;
-vector<Crate*> crates;
-int opponents[3];
-
-void initTeams(Room* rooms[NUM_ROOMS], int(*maze)[MSZ][MSZ]) {
-	Room room1 = *rooms[(rand() % (NUM_ROOMS / 2)) + (NUM_ROOMS / 2)];
-	Room room2 = *rooms[rand() % (NUM_ROOMS / 2)];
+void Arena::initTeams() {
+	Room room1 = *(*rooms)[(rand() % (NUM_ROOMS / 2)) + (NUM_ROOMS / 2)];
+	Room room2 = *(*rooms)[rand() % (NUM_ROOMS / 2)];
 	int room1row = room1.getCenterRow(), room1col = room1.getCenterCol();
 	int room2row = room2.getCenterRow(), room2col = room2.getCenterCol();
 
@@ -38,13 +24,13 @@ void initTeams(Room* rooms[NUM_ROOMS], int(*maze)[MSZ][MSZ]) {
 	}
 }
 
-void initCrates(Room* rooms[NUM_ROOMS], int(*maze)[MSZ][MSZ]) {
+void Arena::initCrates() {
 	Room room;
 	int row, col;
 
 	for (size_t i = 0; i < NUM_ROOMS; i++)
 	{
-		room = *rooms[i];
+		room = *(*rooms)[i];
 		row = (room.getCenterRow() - room.getH() / 2) + (rand() % room.getH());
 		col = (room.getCenterCol() - room.getW() / 2) + (rand() % room.getW());
 		crates.push_back(new Crate(new Cell(row, col), true));
@@ -56,18 +42,23 @@ void initCrates(Room* rooms[NUM_ROOMS], int(*maze)[MSZ][MSZ]) {
 	}
 }
 
-void findOpponents() {
+void Arena::findOpponents() {
 	for (size_t i = 1; i < TEAM_SIZE; i++)
 	{
 		opponents[i] = rand() % TEAM_SIZE;
 	}
 }
 
-void iteration() {
+void Arena::iteration() {
 	// for TEAM_SIZE - each iteration calls playerStance for each player. 6 calls total.
+	for (size_t i = 1; i < TEAM_SIZE; i++)
+	{
+		playerAction(team1[i], team2[opponents[i]]);
+		playerAction(team2[i], team1[opponents[i]]);
+	}
 }
 
-void playerStance(Player* player, Player* opponent) {
+void Arena::playerAction(Player* player, Player* opponent) {
 	if (player->getIsFighter())
 	{
 		int state = player->getState(opponent);
@@ -90,25 +81,44 @@ void playerStance(Player* player, Player* opponent) {
 		support(player);
 	}
 }
-
-void walk(Player* player, Player* opponent) {
-	
+/// <summary>
+/// players disapear after first step.
+///	loop starts without support action, need to start from 0.
+/// 
+/// </summary>
+/// <param name="player"></param>
+/// <param name="opponent"></param>
+void Arena::walk(Player* player, Player* opponent) {
+	startAStar = true;
+	Cell* oldCell = player->getCell();
+	pq.push(oldCell);
+	Cell* newCell = nullptr;
+	int targetColor = (*maze)[opponent->getCell()->getRow()][opponent->getCell()->getCol()];
+	while (startAStar) {
+		newCell = AStarIteration(opponent->getCell(), targetColor);
+	}
+	int oldColor = (*maze)[oldCell->getRow()][oldCell->getCol()];
+	clearCollections();
+	if (newCell == nullptr) return;
+	(*maze)[oldCell->getRow()][oldCell->getCol()] = SPACE;
+	(*maze)[newCell->getRow()][newCell->getCol()] = oldColor;
+	player->setCell(newCell);
 }
 
-void fight(Player* player, Player* opponent) {
+void Arena::fight(Player* player, Player* opponent) {
 
 }
 
-void survive(Player* player) {
+void Arena::survive(Player* player) {
 
 }
 
-void support(Player* player) {
+void Arena::support(Player* player) {
 	// for team - checkIfSupportIsNeeded(team);
 	// if support is needed use A* with ammo, health, or player targets
 }
 
-int checkIfSupportIsNeeded(vector<Player*> team) {
+int Arena::checkIfSupportIsNeeded(vector<Player*> team) {
 	for (size_t i = 0; i < team.size(); i++)
 	{
 		//check on friends - first player that needs support breaks loop
@@ -116,46 +126,7 @@ int checkIfSupportIsNeeded(vector<Player*> team) {
 	return DEAD;
 }
 
-
-// Return the starting position adjacent cell
-Cell* RestorePath(Cell* pc)
-{
-	Cell* childCell = pc;
-	while (pc->getParent() != nullptr)
-	{
-		childCell = pc;
-		pc = pc->getParent();
-	}
-	return childCell;
-}
-
-// Row and col belong to the neighboring cells
-Cell* CheckNeighbor(Cell* pCurrent, int row, int col, vector<Cell*> target) {
-	if (maze[row][col] == PACMAN) // Only Monsters enter here, Pacman handles stopping condition in pacmanStep function
-	{
-		startAStar = false;
-		return RestorePath(new Cell(row, col, pCurrent));
-	}
-	else
-	{
-		maze[row][col] = GRAY;
-		Cell* c = new Cell(row, col, pCurrent);
-		// Pacman is using the negative distance to get the farthest point in the top of the pq.
-		// Then, summing with the function G which is the number of cells to travel in the path.
-		c->computeH(target);
-		if (pacmanTurn)
-		{
-			c->setH(-(c->getH()));
-		}
-		c->setG(pCurrent->getG() + 1);
-		c->setF();
-		pq.push(c);
-		grays.push_back(c);
-		return nullptr;
-	}
-}
-
-Cell* AStarIteration(Cell* target) {
+Cell* Arena::AStarIteration(Cell* target, int targetColor) {
 	// Check if priority queue is not empty
 	if (pq.empty())
 	{
@@ -167,33 +138,85 @@ Cell* AStarIteration(Cell* target) {
 	pq.pop();
 	int row = pCurrent->getRow();
 	int col = pCurrent->getCol();
-	maze[row][col] = BLACK;
+	(*maze)[row][col] = BLACK;
 
 	// Check the neighbors of pCurrent and pick the white ones to add to the priority queue
 	// UP
 	if (startAStar) {
-		if (row + 1 < MSZ && (maze[row + 1][col] == SPACE || maze[row + 1][col] == PACMAN)) {
-			newPosition = CheckNeighbor(pCurrent, row + 1, col, target);
+		if (row + 1 < MSZ && ((*maze)[row + 1][col] == SPACE || (*maze)[row + 1][col] == targetColor)) {
+			newPosition = CheckNeighbor(pCurrent, row + 1, col, target, targetColor);
 		}
 	}
 	// DOWN
 	if (startAStar) {
-		if (row - 1 >= 0 && (maze[row - 1][col] == SPACE || maze[row - 1][col] == PACMAN)) {
-			newPosition = CheckNeighbor(pCurrent, row - 1, col, target);
+		if (row - 1 >= 0 && ((*maze)[row - 1][col] == SPACE || (*maze)[row - 1][col] == targetColor)) {
+			newPosition = CheckNeighbor(pCurrent, row - 1, col, target, targetColor);
 		}
 	}
 	// RIGHT
 	if (startAStar) {
-		if (col + 1 < MSZ && (maze[row][col + 1] == SPACE || maze[row][col + 1] == PACMAN)) {
-			newPosition = CheckNeighbor(pCurrent, row, col + 1, target);
+		if (col + 1 < MSZ && ((*maze)[row][col + 1] == SPACE || (*maze)[row][col + 1] == targetColor)) {
+			newPosition = CheckNeighbor(pCurrent, row, col + 1, target, targetColor);
 		}
 	}
 	// LEFT
 	if (startAStar) {
-		if (col - 1 >= 0 && (maze[row][col - 1] == SPACE || maze[row][col - 1] == PACMAN)) {
-			newPosition = CheckNeighbor(pCurrent, row, col - 1, target);
+		if (col - 1 >= 0 && ((*maze)[row][col - 1] == SPACE || (*maze)[row][col - 1] == targetColor)) {
+			newPosition = CheckNeighbor(pCurrent, row, col - 1, target, targetColor);
 		}
 	}
 	return newPosition;
 }
 
+// Row and col belong to the neighboring cells
+Cell* Arena::CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int targetColor) {
+	if ((*maze)[row][col] == targetColor) // Only Monsters enter here, Pacman handles stopping condition in pacmanStep function
+	{
+		startAStar = false;
+		return RestorePath(new Cell(row, col, pCurrent));
+	}
+	else
+	{
+		(*maze)[row][col] = GRAY;
+		Cell* c = new Cell(row, col, pCurrent);
+		// Pacman is using the negative distance to get the farthest point in the top of the pq.
+		// Then, summing with the function G which is the number of cells to travel in the path.
+		c->computeH(target);
+		//if (pacmanTurn)
+		//{
+		//	c->setH(-(c->getH()));
+		//}
+		c->setG(pCurrent->getG() + 1);
+		c->setF();
+		pq.push(c);
+		grays.push_back(c);
+		return nullptr;
+	}
+}
+
+// Return the starting position adjacent cell
+Cell* Arena::RestorePath(Cell* pc)
+{
+	Cell* childCell = pc;
+	while (pc->getParent() != nullptr)
+	{
+		childCell = pc;
+		pc = pc->getParent();
+	}
+	return childCell;
+}
+
+void Arena::clearCollections() {
+	Cell* temp;
+	// Clearing the maze from blacks and grays
+	for (unsigned i = 0; i < grays.size(); i++)
+	{
+		temp = grays.at(i);
+		(*maze)[temp->getRow()][temp->getCol()] = SPACE;
+	}
+	grays.clear();
+	// Emptying priority queue from cells
+	while (!pq.empty()) {
+		pq.pop();
+	}
+}

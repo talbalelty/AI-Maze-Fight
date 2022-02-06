@@ -31,7 +31,7 @@ public:
 	Arena(int(*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS]);
 	void initTeams();
 	void initCrates();
-	void findOpponents();
+	Player* findOpponent(Player* player, vector<Player*> team);
 	void iteration();
 	void playerAction(Player* player, Player* opponent);
 	void walk(Player* player, Player* opponent);

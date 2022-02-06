@@ -5,7 +5,6 @@ Arena::Arena(int (*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS]) {
 	rooms = _rooms;
 	initCrates();
 	initTeams();
-	findOpponents();
 }
 
 void Arena::initTeams() {
@@ -42,19 +41,29 @@ void Arena::initCrates() {
 	}
 }
 
-void Arena::findOpponents() {
+Player* Arena::findOpponent(Player* player, vector<Player*> team) {
+	Cell* playerCell = player->getCell();
+	Player* opp = team[0];
+	double minManhattan = playerCell->ManhattanDistance(opp->getCell()->getRow(), opp->getCell()->getCol());
 	for (size_t i = 1; i < TEAM_SIZE; i++)
 	{
-		opponents[i] = rand() % TEAM_SIZE;
+		double newManhattan = playerCell->ManhattanDistance(team[i]->getCell()->getRow(), team[i]->getCell()->getCol());
+		if (newManhattan < minManhattan)
+		{
+			minManhattan = newManhattan;
+			opp = team[i];
+		}
 	}
+	return opp;
 }
 
 void Arena::iteration() {
 	// for TEAM_SIZE - each iteration calls playerStance for each player. 6 calls total.
-	for (size_t i = 1; i < TEAM_SIZE; i++)
+	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
-		playerAction(team1[i], team2[opponents[i]]);
-		playerAction(team2[i], team1[opponents[i]]);
+
+		playerAction(team1[i], findOpponent(team1[i], team2));
+		playerAction(team2[i], findOpponent(team2[i], team1));
 	}
 }
 
@@ -84,24 +93,28 @@ void Arena::playerAction(Player* player, Player* opponent) {
 /// <summary>
 /// players disapear after first step.
 ///	loop starts without support action, need to start from 0.
-/// 
 /// </summary>
 /// <param name="player"></param>
 /// <param name="opponent"></param>
 void Arena::walk(Player* player, Player* opponent) {
 	startAStar = true;
 	Cell* oldCell = player->getCell();
+	int playerColor = (*maze)[oldCell->getRow()][oldCell->getCol()];
 	pq.push(oldCell);
+	grays.push_back(oldCell);
 	Cell* newCell = nullptr;
 	int targetColor = (*maze)[opponent->getCell()->getRow()][opponent->getCell()->getCol()];
 	while (startAStar) {
 		newCell = AStarIteration(opponent->getCell(), targetColor);
 	}
-	int oldColor = (*maze)[oldCell->getRow()][oldCell->getCol()];
 	clearCollections();
-	if (newCell == nullptr) return;
+	if (newCell == nullptr) {
+		(*maze)[oldCell->getRow()][oldCell->getCol()] = playerColor;
+		return;
+	}
 	(*maze)[oldCell->getRow()][oldCell->getCol()] = SPACE;
-	(*maze)[newCell->getRow()][newCell->getCol()] = oldColor;
+	(*maze)[newCell->getRow()][newCell->getCol()] = playerColor;
+	newCell->reset();
 	player->setCell(newCell);
 }
 
@@ -142,7 +155,7 @@ Cell* Arena::AStarIteration(Cell* target, int targetColor) {
 
 	// Check the neighbors of pCurrent and pick the white ones to add to the priority queue
 	// UP
-	if (startAStar) {
+	if (startAStar) {// can be diplicate targetcolor
 		if (row + 1 < MSZ && ((*maze)[row + 1][col] == SPACE || (*maze)[row + 1][col] == targetColor)) {
 			newPosition = CheckNeighbor(pCurrent, row + 1, col, target, targetColor);
 		}

@@ -379,7 +379,7 @@ void main(int argc, char* argv[])
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE);
-	glutInitWindowSize(600, 600);
+	glutInitWindowSize(1200, 1200);
 	glutInitWindowPosition(200, 100);
 	glutCreateWindow("Dungeon");
 	glutDisplayFunc(display);

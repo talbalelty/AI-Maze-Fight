@@ -31,5 +31,6 @@ public:
 	Cell* getParent() { return parent; }
 	int ManhattanDistance(int tRow, int tCol);
 	void computeH(Cell* target);
+	void reset() { g = 0; h = 0; f = 0; parent = nullptr; }
 };
 

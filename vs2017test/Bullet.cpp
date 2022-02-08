@@ -34,11 +34,23 @@ Bullet::~Bullet()
 {
 }
 
+/// <summary>
+/// TODO : figure out how characters take damage from bullets
+/// </summary>
+/// <param name="maze"></param>
 void Bullet::move(int maze[MSZ][MSZ])
 {
 	// check that current x,y is in SPACE otherwise stop moving bullet
-	if (maze[(int)y][(int)x] == WALL)
+	if (maze[(int)y][(int)x] == WALL) {
 		is_fired = false;
+	}
+	// bullet hit a character
+	if (maze[(int)y][(int)x] == TEAM1) {
+
+	}
+	if (maze[(int)y][(int)x] == TEAM2) {
+
+	}
 	if (is_fired)
 	{
 		double speed = 0.1;

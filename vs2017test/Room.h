@@ -2,8 +2,8 @@
 class Room
 {
 private:
-	int w, h;
-	int center_row, center_col; 
+	int w, h; //absolute numbers
+	int center_row, center_col; //indexes
 public:
 	Room();
 	~Room();

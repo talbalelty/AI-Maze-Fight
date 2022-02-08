@@ -61,7 +61,6 @@ void Arena::iteration() {
 	// for TEAM_SIZE - each iteration calls playerStance for each player. 6 calls total.
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
-
 		playerAction(team1[i], findOpponent(team1[i], team2));
 		playerAction(team2[i], findOpponent(team2[i], team1));
 	}
@@ -70,7 +69,7 @@ void Arena::iteration() {
 void Arena::playerAction(Player* player, Player* opponent) {
 	if (player->getIsFighter())
 	{
-		int state = player->getState(opponent);
+		int state = player->getState(opponent, *rooms);
 		switch (state)
 		{
 		case WALK:
@@ -81,6 +80,8 @@ void Arena::playerAction(Player* player, Player* opponent) {
 			break;
 		case SURVIVE:
 			survive(player);
+			break;
+		case HOLD:
 			break;
 		default: // DEAD
 			break;

@@ -18,6 +18,7 @@ public:
 	void show();
 	bool getIsFired() { return is_fired; }
 	void SimulateFire(int maze[MSZ][MSZ], double security_map[MSZ][MSZ], double damage);
-	
+	double getX() { return x; }
+	double getY() { return y; }
 };
 

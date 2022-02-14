@@ -19,7 +19,7 @@ Player::~Player() {
 }
 
 int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
-	if (health == 0)
+	if (health <= 0)
 	{
 		return DEAD;
 	}
@@ -34,15 +34,18 @@ int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
 	//double distance = sqrt(pow(oppCol - col, 2) + pow(oppRow - row, 2));
 	//bool isInFightDistance = distance <= DISTANCE_TO_TARGET;
 	int playerRoom = getRoomNumber(rooms);
-	int opponentRoom = opponent->getRoomNumber(rooms);
-	if (playerRoom == opponentRoom)
+	if (opponent)
 	{
-		return FIGHT;
-	} 
-	// Player will HOLD
-	if (playerRoom != -1 && opponentRoom == -1)
-	{
-		return HOLD;
+		int opponentRoom = opponent->getRoomNumber(rooms);
+		if (playerRoom == opponentRoom)
+		{
+			return FIGHT;
+		} 
+		// Player will HOLD
+		if (playerRoom != -1 && opponentRoom == -1)
+		{
+			return HOLD;
+		}
 	}
 	// else WALK
 	return WALK;

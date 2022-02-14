@@ -13,6 +13,7 @@
 #include "Grenade.h"
 #include "Definitions.h"
 #include "Player.h"
+#include <math.h>
 
 using namespace std;
 
@@ -43,4 +44,5 @@ public:
 	Cell* CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int targetColor);
 	Cell* RestorePath(Cell* pc);
 	void clearCollections();
+	void moveBullets(Player* player, Player* opponent);
 };

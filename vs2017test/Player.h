@@ -18,6 +18,7 @@ private:
 	int grenadeAmmo;
 	int bulletAmmo;
 	bool isFighter;
+	vector<Bullet*> bullets;
 public:
 	Player();
 	Player(Cell* newCell, bool _isFighter);
@@ -27,5 +28,7 @@ public:
 	bool getIsFighter() { return isFighter; }
 	int getState(Player* opponent, Room* rooms[NUM_ROOMS]);
 	int getRoomNumber(Room* rooms[NUM_ROOMS]);
-	
+	vector<Bullet*> getBullets() { return bullets; }
+	void setBullets(vector<Bullet*> _bullets) { bullets = _bullets; }
+	void takeDamage(int damage) { health -= abs(damage); }
 };

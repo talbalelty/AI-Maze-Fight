@@ -17,7 +17,6 @@ Bullet::Bullet(double xx, double yy)
 	is_fired = false;
 	x = xx;
 	y = yy;
-
 }
 
 Bullet::Bullet(double xx, double yy, double angle)
@@ -26,9 +25,7 @@ Bullet::Bullet(double xx, double yy, double angle)
 	is_fired = false;
 	x = xx;
 	y = yy;
-
 }
-
 
 Bullet::~Bullet()
 {
@@ -41,15 +38,9 @@ Bullet::~Bullet()
 void Bullet::move(int maze[MSZ][MSZ])
 {
 	// check that current x,y is in SPACE otherwise stop moving bullet
-	if (maze[(int)y][(int)x] == WALL) {
+	int cellColor = maze[(int)y][(int)x];
+	if (cellColor == WALL || cellColor == TEAM1 || cellColor == TEAM2) {
 		is_fired = false;
-	}
-	// bullet hit a character
-	if (maze[(int)y][(int)x] == TEAM1) {
-
-	}
-	if (maze[(int)y][(int)x] == TEAM2) {
-
 	}
 	if (is_fired)
 	{
@@ -61,8 +52,6 @@ void Bullet::move(int maze[MSZ][MSZ])
 		x += dx * speed;
 		y += dy * speed;
 	}
-
-
 }
 
 void Bullet::show()

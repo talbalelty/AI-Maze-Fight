@@ -40,18 +40,32 @@ void Arena::initCrates() {
 		(*maze)[row][col] = HP;
 	}
 }
-
+/// <summary>
+/// check to see if runs
+/// </summary>
+/// <param name="player"></param>
+/// <param name="team"></param>
+/// <returns></returns>
 Player* Arena::findOpponent(Player* player, vector<Player*> team) {
 	Cell* playerCell = player->getCell();
-	Player* opp = team[0];
-	double minManhattan = playerCell->ManhattanDistance(opp->getCell()->getRow(), opp->getCell()->getCol());
-	for (size_t i = 1; i < TEAM_SIZE; i++)
+	Player* opp = nullptr;
+	double minManhattan = LONG_MAX;
+	double newManhattan = LONG_MAX;
+	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
-		double newManhattan = playerCell->ManhattanDistance(team[i]->getCell()->getRow(), team[i]->getCell()->getCol());
-		if (newManhattan < minManhattan)
+		if (team[i]->getState(player, *rooms) != DEAD)
 		{
-			minManhattan = newManhattan;
-			opp = team[i];
+			if (opp == nullptr)
+			{
+				opp = team[i];
+				minManhattan = playerCell->ManhattanDistance(opp->getCell()->getRow(), opp->getCell()->getCol());
+			}
+			newManhattan = playerCell->ManhattanDistance(team[i]->getCell()->getRow(), team[i]->getCell()->getCol());
+			if (newManhattan < minManhattan)
+			{
+				minManhattan = newManhattan;
+				opp = team[i];
+			}
 		}
 	}
 	return opp;
@@ -59,10 +73,16 @@ Player* Arena::findOpponent(Player* player, vector<Player*> team) {
 
 void Arena::iteration() {
 	// for TEAM_SIZE - each iteration calls playerStance for each player. 6 calls total.
+	Player* opponent = nullptr;
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
-		playerAction(team1[i], findOpponent(team1[i], team2));
-		playerAction(team2[i], findOpponent(team2[i], team1));
+		opponent = findOpponent(team1[i], team2);
+		playerAction(team1[i], opponent);
+	}
+	for (size_t i = 0; i < TEAM_SIZE; i++)
+	{
+		opponent = findOpponent(team2[i], team1);
+		playerAction(team2[i], opponent);
 	}
 }
 
@@ -83,9 +103,13 @@ void Arena::playerAction(Player* player, Player* opponent) {
 			break;
 		case HOLD:
 			break;
+		case DEAD:
+
+			break;
 		default: // DEAD
 			break;
 		}
+		moveBullets(player, opponent);
 	}
 	else {
 		support(player);
@@ -120,7 +144,14 @@ void Arena::walk(Player* player, Player* opponent) {
 }
 
 void Arena::fight(Player* player, Player* opponent) {
-
+	int playerX = player->getCell()->getCol();
+	int playerY = player->getCell()->getRow();
+	int opponentX = opponent->getCell()->getCol();
+	int opponentY = opponent->getCell()->getRow();
+	double rad = atan2(opponentY - playerY , opponentX - playerX);
+	Bullet* b = new Bullet(playerX, playerY, rad);
+	player->getBullets().push_back(b);
+	b->setIsFired(true);
 }
 
 void Arena::survive(Player* player) {
@@ -138,6 +169,29 @@ int Arena::checkIfSupportIsNeeded(vector<Player*> team) {
 		//check on friends - first player that needs support breaks loop
 	}
 	return DEAD;
+}
+
+void Arena::moveBullets(Player* player, Player* opponent) {
+	vector<Bullet*> bullets = player->getBullets();
+
+	for (size_t i = 0; i < bullets.size(); i++)
+	{
+		Bullet* b = bullets.at(i);
+		b->move(*maze);
+		b->show();
+		bool hitX = b->getX() == opponent->getCell()->getCol();
+		bool hitY = b->getY() == opponent->getCell()->getRow();
+		if (hitX && hitY)
+		{
+			opponent->takeDamage(5);
+		}
+		if (!b->getIsFired())
+		{
+			bullets.erase(bullets.begin() + i);
+			i--;
+		}
+	}
+	player->setBullets(bullets);
 }
 
 Cell* Arena::AStarIteration(Cell* target, int targetColor) {

@@ -45,4 +45,5 @@ public:
 	Cell* RestorePath(Cell* pc);
 	void clearCollections();
 	void moveBullets(Player* player, Player* opponent);
+	void show();
 };

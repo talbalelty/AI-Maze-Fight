@@ -71,3 +71,8 @@ int Player::getRoomNumber(Room* rooms[NUM_ROOMS]) {
 	}
 	return -1;
 }
+
+void Player::restockAmmo() {
+	bulletAmmo += 5;
+	grenadeAmmo += 1;
+}

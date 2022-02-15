@@ -25,6 +25,12 @@ Bullet::Bullet(double xx, double yy, double angle)
 	is_fired = false;
 	x = xx;
 	y = yy;
+	double dx, dy;
+	dx = cos(angle_direction);
+	dy = sin(angle_direction);
+	// update x,y
+	x += dx;
+	y += dy;
 }
 
 Bullet::~Bullet()

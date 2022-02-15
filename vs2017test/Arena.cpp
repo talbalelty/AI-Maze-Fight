@@ -40,6 +40,7 @@ void Arena::initCrates() {
 		(*maze)[row][col] = HP;
 	}
 }
+
 /// <summary>
 /// check to see if runs
 /// </summary>
@@ -69,6 +70,20 @@ Player* Arena::findOpponent(Player* player, vector<Player*> team) {
 		}
 	}
 	return opp;
+}
+
+void Arena::show() {
+	Player* opponent = nullptr;
+	for (size_t i = 0; i < TEAM_SIZE; i++)
+	{
+		opponent = findOpponent(team1[i], team2);
+		moveBullets(team1[i], opponent);
+	}
+	for (size_t i = 0; i < TEAM_SIZE; i++)
+	{
+		opponent = findOpponent(team2[i], team1);
+		moveBullets(team2[i], opponent);
+	}
 }
 
 void Arena::iteration() {
@@ -109,7 +124,6 @@ void Arena::playerAction(Player* player, Player* opponent) {
 		default: // DEAD
 			break;
 		}
-		moveBullets(player, opponent);
 	}
 	else {
 		support(player);
@@ -144,14 +158,24 @@ void Arena::walk(Player* player, Player* opponent) {
 }
 
 void Arena::fight(Player* player, Player* opponent) {
-	int playerX = player->getCell()->getCol();
-	int playerY = player->getCell()->getRow();
-	int opponentX = opponent->getCell()->getCol();
-	int opponentY = opponent->getCell()->getRow();
-	double rad = atan2(opponentY - playerY , opponentX - playerX);
-	Bullet* b = new Bullet(playerX, playerY, rad);
-	player->getBullets().push_back(b);
-	b->setIsFired(true);
+	if (player->getBullets().size() > 0)
+	{
+		return;
+	}
+	if (player->getBulletAmmo() > 0)
+	{
+		int playerX = player->getCell()->getCol();
+		int playerY = player->getCell()->getRow();
+		int opponentX = opponent->getCell()->getCol();
+		int opponentY = opponent->getCell()->getRow();
+		double rad = atan2(opponentY - playerY, opponentX - playerX);
+		Bullet* b = new Bullet(playerX, playerY, rad);
+		b->setIsFired(true);
+		vector<Bullet*> bullets = player->getBullets();
+		bullets.push_back(b);
+		player->setBullets(bullets);
+		player->fireBullet();
+	}
 }
 
 void Arena::survive(Player* player) {
@@ -171,6 +195,12 @@ int Arena::checkIfSupportIsNeeded(vector<Player*> team) {
 	return DEAD;
 }
 
+
+/// <summary>
+/// Impove line of fire to be centered
+/// </summary>
+/// <param name="player"></param>
+/// <param name="opponent"></param>
 void Arena::moveBullets(Player* player, Player* opponent) {
 	vector<Bullet*> bullets = player->getBullets();
 

@@ -311,17 +311,18 @@ void display()
 	ShowMaze();
 
 	// show bullet
-	if (pb != nullptr)
-	{
-		pb->show();
-	}
+	//if (pb != nullptr)
+	//{
+	//	pb->show();
+	//}
 
-	// show grenade
-	if (pg != nullptr)
-	{
-		pg->show();
-	}
+	//// show grenade
+	//if (pg != nullptr)
+	//{
+	//	pg->show();
+	//}
 
+	arena->show();
 
 	glutSwapBuffers(); // show all
 }

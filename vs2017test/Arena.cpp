@@ -16,9 +16,9 @@ void Arena::initTeams() {
 	//First player is support
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
-		team1.push_back(new Player(new Cell(room1row + i, room1col + i), i != 0));
+		team1.push_back(new Player(new Cell(room1row + i, room1col + i), i != 0, TEAM1));
 		(*maze)[room1row + i][room1col + i] = TEAM1;
-		team2.push_back(new Player(new Cell(room2row + i, room2col + i), i != 0));
+		team2.push_back(new Player(new Cell(room2row + i, room2col + i), i != 0, TEAM2));
 		(*maze)[room2row + i][room2col + i] = TEAM2;
 	}
 }
@@ -52,7 +52,7 @@ Player* Arena::findOpponent(Player* player, vector<Player*> team) {
 	Player* opp = nullptr;
 	double minManhattan = LONG_MAX;
 	double newManhattan = LONG_MAX;
-	for (size_t i = 0; i < TEAM_SIZE; i++)
+	for (size_t i = 1; i < TEAM_SIZE; i++)
 	{
 		if (team[i]->getState(player, *rooms) != DEAD)
 		{
@@ -77,12 +77,18 @@ void Arena::show() {
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
 		opponent = findOpponent(team1[i], team2);
-		moveBullets(team1[i], opponent);
+		if (opponent)
+		{
+			moveBullets(team1[i], opponent);
+		}
 	}
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
 		opponent = findOpponent(team2[i], team1);
-		moveBullets(team2[i], opponent);
+		if (opponent)
+		{
+			moveBullets(team2[i], opponent);
+		}
 	}
 }
 
@@ -92,16 +98,23 @@ void Arena::iteration() {
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
 		opponent = findOpponent(team1[i], team2);
-		playerAction(team1[i], opponent);
+		if (opponent) {
+			playerAction(team1[i], opponent);
+		}
 	}
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
 		opponent = findOpponent(team2[i], team1);
-		playerAction(team2[i], opponent);
+		if (opponent)
+		{
+			playerAction(team2[i], opponent);
+		}
 	}
 }
 
 void Arena::playerAction(Player* player, Player* opponent) {
+	int col = player->getCell()->getCol();
+	int row = player->getCell()->getRow();
 	if (player->getIsFighter())
 	{
 		int state = player->getState(opponent, *rooms);
@@ -119,7 +132,7 @@ void Arena::playerAction(Player* player, Player* opponent) {
 		case HOLD:
 			break;
 		case DEAD:
-
+			(*maze)[row][col] = SPACE;
 			break;
 		default: // DEAD
 			break;
@@ -138,21 +151,19 @@ void Arena::playerAction(Player* player, Player* opponent) {
 void Arena::walk(Player* player, Player* opponent) {
 	startAStar = true;
 	Cell* oldCell = player->getCell();
-	int playerColor = (*maze)[oldCell->getRow()][oldCell->getCol()];
 	pq.push(oldCell);
 	grays.push_back(oldCell);
 	Cell* newCell = nullptr;
-	int targetColor = (*maze)[opponent->getCell()->getRow()][opponent->getCell()->getCol()];
 	while (startAStar) {
-		newCell = AStarIteration(opponent->getCell(), targetColor);
+		newCell = AStarIteration(opponent->getCell(), opponent->getColor());
 	}
 	clearCollections();
 	if (newCell == nullptr) {
-		(*maze)[oldCell->getRow()][oldCell->getCol()] = playerColor;
+		(*maze)[oldCell->getRow()][oldCell->getCol()] = player->getColor();
 		return;
 	}
 	(*maze)[oldCell->getRow()][oldCell->getCol()] = SPACE;
-	(*maze)[newCell->getRow()][newCell->getCol()] = playerColor;
+	(*maze)[newCell->getRow()][newCell->getCol()] = player->getColor();
 	newCell->reset();
 	player->setCell(newCell);
 }
@@ -169,7 +180,7 @@ void Arena::fight(Player* player, Player* opponent) {
 		int opponentX = opponent->getCell()->getCol();
 		int opponentY = opponent->getCell()->getRow();
 		double rad = atan2(opponentY - playerY, opponentX - playerX);
-		Bullet* b = new Bullet(playerX, playerY, rad);
+		Bullet* b = new Bullet(playerX+0.5, playerY +0.5, rad);
 		b->setIsFired(true);
 		vector<Bullet*> bullets = player->getBullets();
 		bullets.push_back(b);
@@ -208,9 +219,9 @@ void Arena::moveBullets(Player* player, Player* opponent) {
 	{
 		Bullet* b = bullets.at(i);
 		b->move(*maze);
-		b->show();
-		bool hitX = b->getX() == opponent->getCell()->getCol();
-		bool hitY = b->getY() == opponent->getCell()->getRow();
+		b->show(player->getColor());
+		bool hitX = (int)(b->getX()) == opponent->getCell()->getCol();
+		bool hitY = (int)(b->getY()) == opponent->getCell()->getRow();
 		if (hitX && hitY)
 		{
 			opponent->takeDamage(5);
@@ -271,7 +282,7 @@ Cell* Arena::CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int t
 	if ((*maze)[row][col] == targetColor) // Only Monsters enter here, Pacman handles stopping condition in pacmanStep function
 	{
 		startAStar = false;
-		return RestorePath(new Cell(row, col, pCurrent));
+		return RestorePath(pCurrent);
 	}
 	else
 	{
@@ -295,7 +306,7 @@ Cell* Arena::CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int t
 // Return the starting position adjacent cell
 Cell* Arena::RestorePath(Cell* pc)
 {
-	Cell* childCell = pc;
+	Cell* childCell = nullptr;
 	while (pc->getParent() != nullptr)
 	{
 		childCell = pc;

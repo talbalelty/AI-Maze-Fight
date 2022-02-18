@@ -19,11 +19,12 @@ private:
 	int health;
 	int grenadeAmmo;
 	int bulletAmmo;
+	int color;
 	bool isFighter;
 	vector<Bullet*> bullets;
 public:
 	Player();
-	Player(Cell* newCell, bool _isFighter);
+	Player(Cell* newCell, bool _isFighter, int _color);
 	~Player();
 	void setCell(Cell* other) { cell = other; }
 	Cell* getCell() { return cell; }
@@ -39,4 +40,5 @@ public:
 	void throwGrenade() { grenadeAmmo--; }
 	void restockAmmo();
 	void heal() { health += 5; }
+	int getColor() { return color; }
 };

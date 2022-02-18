@@ -35,7 +35,7 @@ void Grenade::explode(int maze[MSZ][MSZ])
 void Grenade::show()
 {
 	for (int i = 0; i < NUM_BULLETS; i++)
-		bullets[i]->show();
+		bullets[i]->show(1);
 
 }
 

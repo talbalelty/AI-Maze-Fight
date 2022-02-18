@@ -303,7 +303,19 @@ void CreateSecurityMap()
 		g->SimulateExplosion(maze, security_map,damage);
 	}
 }
-
+//void display(void)
+//{
+//	static const double ticks_per_second = 60.0; // or whatever
+//	static int last;
+//	int now = glutGet(GLUT_ELAPSED_TIME);
+//	int tick = (int)floor(now * ticks_per_second / 1000);
+//	if (!last)
+//		last = tick - 1;
+//	for (; last < tick; last++)
+//		update();
+//	draw();
+//	glutPostRedisplay();
+//}
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT); // clean frame buffer
@@ -340,7 +352,7 @@ void idle()
 	// if something iteration()
 
 	arena->iteration();
-
+	Sleep(200);
 	glutPostRedisplay(); // indirect call to display
 }
 

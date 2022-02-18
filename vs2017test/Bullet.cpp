@@ -44,7 +44,7 @@ Bullet::~Bullet()
 void Bullet::move(int maze[MSZ][MSZ])
 {
 	// check that current x,y is in SPACE otherwise stop moving bullet
-	int cellColor = maze[(int)y][(int)x];
+	int cellColor = maze[(int)(y)][(int)(x)];
 	if (cellColor == WALL || cellColor == TEAM1 || cellColor == TEAM2) {
 		is_fired = false;
 	}
@@ -60,9 +60,15 @@ void Bullet::move(int maze[MSZ][MSZ])
 	}
 }
 
-void Bullet::show()
+void Bullet::show(int playerColor)
 {
-	glColor3d(0, 0, 0); // black
+	if (playerColor == TEAM1)
+	{
+		glColor3d(0, 1, 0); // green
+	} 
+	else {
+		glColor3d(0, 1, 1); // yellow
+	}
 	glBegin(GL_POLYGON);
 		glVertex2d(x, y + 0.5);
 		glVertex2d(x+0.5, y );

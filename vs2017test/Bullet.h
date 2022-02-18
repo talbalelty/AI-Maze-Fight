@@ -15,7 +15,7 @@ public:
 	~Bullet();
 	void move(int maze[MSZ][MSZ]);
 	void setIsFired(bool status) { is_fired = status; }
-	void show();
+	void show(int playerColor);
 	bool getIsFired() { return is_fired; }
 	void SimulateFire(int maze[MSZ][MSZ], double security_map[MSZ][MSZ], double damage);
 	double getX() { return x; }

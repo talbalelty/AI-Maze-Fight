@@ -6,12 +6,13 @@ Player::Player() {
 	grenadeAmmo = 2;
 }
 
-Player::Player(Cell* newCell, bool _isFighter) {
+Player::Player(Cell* newCell, bool _isFighter, int _color) {
 	health = 10;
 	bulletAmmo = 10;
 	grenadeAmmo = 2;
 	cell = newCell;
 	isFighter = _isFighter;
+	color = _color;
 }
 
 Player::~Player() {
@@ -19,6 +20,8 @@ Player::~Player() {
 }
 
 int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
+	int col = cell->getCol();
+	int row = cell->getRow();
 	if (health <= 0)
 	{
 		return DEAD;
@@ -27,23 +30,25 @@ int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
 	{
 		return SURVIVE;
 	}
-	//int col = cell->getCol();
-	//int row = cell->getRow();
-	//int oppCol = opponent->getCell()->getCol();
-	//int oppRow = opponent->getCell()->getRow();
-	//double distance = sqrt(pow(oppCol - col, 2) + pow(oppRow - row, 2));
-	//bool isInFightDistance = distance <= DISTANCE_TO_TARGET;
-	int playerRoom = getRoomNumber(rooms);
 	if (opponent)
 	{
+		int oppCol = opponent->getCell()->getCol();
+		int oppRow = opponent->getCell()->getRow();
+		double distance = sqrt(pow(oppCol - col, 2) + pow(oppRow - row, 2));
+		int playerRoom = getRoomNumber(rooms);
 		int opponentRoom = opponent->getRoomNumber(rooms);
-		if (playerRoom == opponentRoom)
+		bool isInSameRoom = playerRoom == opponentRoom;
+		bool isInFightDistance = distance <= DISTANCE_TO_TARGET && isInSameRoom;
+		if (isInFightDistance)
 		{
 			return FIGHT;
 		} 
 		// Player will HOLD
-		if (playerRoom != -1 && opponentRoom == -1)
+		bool isInCorridor = playerRoom != -1 && opponentRoom == -1;
+		bool isInHoldDistance = distance <= DISTANCE_TO_TARGET && isInCorridor;
+		if (isInHoldDistance)
 		{
+			// TODO - Find a better solution to hold condition!
 			return HOLD;
 		}
 	}

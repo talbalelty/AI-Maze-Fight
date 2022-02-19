@@ -1,8 +1,9 @@
 #include "Arena.h"
 
-Arena::Arena(int (*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS]) {
+Arena::Arena(int(*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS], double(*_security_map)[MSZ][MSZ]) {
 	maze = _maze;
 	rooms = _rooms;
+	security_map = _security_map;
 	initCrates();
 	initTeams();
 }
@@ -32,12 +33,12 @@ void Arena::initCrates() {
 		room = *(*rooms)[i];
 		row = (room.getCenterRow() - room.getH() / 2) + (rand() % room.getH());
 		col = (room.getCenterCol() - room.getW() / 2) + (rand() % room.getW());
-		crates.push_back(new Crate(new Cell(row, col), true));
+		crates.push_back(new Crate(new Cell(row, col), AMMO));
 		(*maze)[row][col] = AMMO;
 		row = (room.getCenterRow() - room.getH() / 2) + (rand() % room.getH());
 		col = (room.getCenterCol() - room.getW() / 2) + (rand() % room.getW());
-		crates.push_back(new Crate(new Cell(row, col), false));
-		(*maze)[row][col] = HP;
+		crates.push_back(new Crate(new Cell(row, col), HEALTH));
+		(*maze)[row][col] = HEALTH;
 	}
 }
 
@@ -155,17 +156,38 @@ void Arena::walk(Player* player, Player* opponent) {
 	grays.push_back(oldCell);
 	Cell* newCell = nullptr;
 	while (startAStar) {
-		newCell = AStarIteration(opponent->getCell(), opponent->getColor());
+		newCell = AStarIteration(opponent->getCell(), opponent->getTeam());
 	}
 	clearCollections();
 	if (newCell == nullptr) {
-		(*maze)[oldCell->getRow()][oldCell->getCol()] = player->getColor();
+		(*maze)[oldCell->getRow()][oldCell->getCol()] = player->getTeam();
 		return;
 	}
 	(*maze)[oldCell->getRow()][oldCell->getCol()] = SPACE;
-	(*maze)[newCell->getRow()][newCell->getCol()] = player->getColor();
+	(*maze)[newCell->getRow()][newCell->getCol()] = player->getTeam();
 	newCell->reset();
 	player->setCell(newCell);
+}
+
+void Arena::walk(Player* support, Crate* crate) {
+	startAStar = true;
+	Cell* oldCell = support->getCell();
+	pq.push(oldCell);
+	grays.push_back(oldCell);
+	Cell* newCell = nullptr;
+	Cell* crateCell = crate->getCell();
+	while (startAStar) {
+		newCell = AStarIteration(crateCell, crate->getType());
+	}
+	clearCollections();
+	if (newCell == nullptr) {
+		(*maze)[oldCell->getRow()][oldCell->getCol()] = support->getTeam();
+		return;
+	}
+	(*maze)[oldCell->getRow()][oldCell->getCol()] = SPACE;
+	(*maze)[newCell->getRow()][newCell->getCol()] = support->getTeam();
+	newCell->reset();
+	support->setCell(newCell);
 }
 
 void Arena::fight(Player* player, Player* opponent) {
@@ -180,7 +202,7 @@ void Arena::fight(Player* player, Player* opponent) {
 		int opponentX = opponent->getCell()->getCol();
 		int opponentY = opponent->getCell()->getRow();
 		double rad = atan2(opponentY - playerY, opponentX - playerX);
-		Bullet* b = new Bullet(playerX+0.5, playerY +0.5, rad);
+		Bullet* b = new Bullet(playerX + 0.5, playerY + 0.5, rad);
 		b->setIsFired(true);
 		vector<Bullet*> bullets = player->getBullets();
 		bullets.push_back(b);
@@ -190,22 +212,119 @@ void Arena::fight(Player* player, Player* opponent) {
 }
 
 void Arena::survive(Player* player) {
-
+	if (player->getTeam() == TEAM1)
+	{
+		walk(player, team1[0]);
+	}
+	else
+	{
+		walk(player, team2[0]);
+	}
 }
 
-void Arena::support(Player* player) {
-	// for team - checkIfSupportIsNeeded(team);
+void Arena::support(Player* support) {
+	if (support->getTeam() == TEAM1)
+	{
+		supportIfNeeded(team1);
+	}
+	else
+	{
+		supportIfNeeded(team2);
+	}
 	// if support is needed use A* with ammo, health, or player targets
 }
 
-int Arena::checkIfSupportIsNeeded(vector<Player*> team) {
-	for (size_t i = 0; i < team.size(); i++)
+void Arena::supportIfNeeded(vector<Player*> team) {
+	Player* support = team[0];
+	Player* player = nullptr;
+	int supportType;
+	Crate* crate = nullptr;
+	for (size_t i = 1; i < team.size(); i++)
 	{
 		//check on friends - first player that needs support breaks loop
+		player = team[i];
+		if (player->getHealth() != 0)
+		{
+			supportType = player->getSupportType();
+			if (supportType == HEALTH)
+			{
+				if (support->getCrateType() != HEALTH)
+				{
+					int index = findCrate(support, crates, HEALTH);
+					crate = crates.at(index);
+					walk(support, crate);
+					if (support->getCell()->ManhattanDistance(crate->getCell()->getRow(), crate->getCell()->getCol()) <= 2)
+					{
+						support->setCrateType(HEALTH);
+						cleanCrate(index);
+					}
+				}
+				else {
+					walk(support, player);
+					if (support->getCell()->ManhattanDistance(player->getCell()->getRow(), player->getCell()->getCol()) <= 2)
+					{
+						player->heal();
+						support->setCrateType(-1);
+					}
+				}
+			}
+			if (supportType == AMMO)
+			{
+				if (support->getCrateType() != AMMO)
+				{
+					int index = findCrate(support, crates, AMMO);
+					crate = crates.at(index);
+					walk(support, crate);
+					if (support->getCell()->ManhattanDistance(crate->getCell()->getRow(), crate->getCell()->getCol()) <= 2)
+					{
+						support->setCrateType(AMMO);
+						cleanCrate(index);
+					}
+				}
+				else {
+					walk(support, player);
+					if (support->getCell()->ManhattanDistance(player->getCell()->getRow(), player->getCell()->getCol()) <= 2)
+					{
+						player->restockAmmo();
+						support->setCrateType(-1);
+					}
+				}
+			}
+		}
 	}
-	return DEAD;
 }
 
+int Arena::findCrate(Player* support, vector<Crate*> crates, int type) {
+	Cell* supportCell = support->getCell();
+	int index = -1;
+	Crate* crate = nullptr;
+	double minManhattan = LONG_MAX;
+	double newManhattan = LONG_MAX;
+	for (size_t i = 0; i < crates.size(); i++)
+	{
+		if (crate == nullptr)
+		{
+			index = i;
+			crate = crates[i];
+			minManhattan = supportCell->ManhattanDistance(crate->getCell()->getRow(), crate->getCell()->getCol());
+		}
+		newManhattan = supportCell->ManhattanDistance(crates[i]->getCell()->getRow(), crates[i]->getCell()->getCol());
+		if (newManhattan < minManhattan)
+		{
+			minManhattan = newManhattan;
+			crate = crates[i];
+			index = i;
+		}
+
+	}
+	return index;
+}
+
+void Arena::cleanCrate(int index) {
+	Cell* cell = crates.at(index)->getCell();
+	(*maze)[cell->getRow()][cell->getCol()] = SPACE;
+	crates.erase(crates.begin() + index);
+}
 
 /// <summary>
 /// Impove line of fire to be centered
@@ -219,12 +338,12 @@ void Arena::moveBullets(Player* player, Player* opponent) {
 	{
 		Bullet* b = bullets.at(i);
 		b->move(*maze);
-		b->show(player->getColor());
+		b->show(player->getTeam());
 		bool hitX = (int)(b->getX()) == opponent->getCell()->getCol();
 		bool hitY = (int)(b->getY()) == opponent->getCell()->getRow();
 		if (hitX && hitY)
 		{
-			opponent->takeDamage(5);
+			opponent->takeDamage(1);
 		}
 		if (!b->getIsFired())
 		{
@@ -295,7 +414,7 @@ Cell* Arena::CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int t
 		//{
 		//	c->setH(-(c->getH()));
 		//}
-		c->setG(pCurrent->getG() + 1);
+		c->setG(pCurrent->getG() + 1 + (*security_map)[row][col]);
 		c->setF();
 		pq.push(c);
 		grays.push_back(c);

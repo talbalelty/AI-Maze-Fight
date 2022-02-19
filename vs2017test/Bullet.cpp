@@ -50,7 +50,7 @@ void Bullet::move(int maze[MSZ][MSZ])
 	}
 	if (is_fired)
 	{
-		double speed = 0.1;
+		double speed = 1.1;
 		double dx, dy;
 		dx = cos(angle_direction);
 		dy = sin(angle_direction);
@@ -87,7 +87,7 @@ void Bullet::SimulateFire(int maze[MSZ][MSZ], double security_map[MSZ][MSZ], dou
 		else
 		{
 			security_map[(int)y][(int)x] += damage;
-			double speed = 0.1;
+			double speed = 1;
 			double dx, dy;
 			dx = cos(angle_direction);
 			dy = sin(angle_direction);

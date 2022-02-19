@@ -7,7 +7,7 @@ Crate::~Crate() {
 
 }
 
-Crate::Crate(Cell* newCell, bool _type) {
+Crate::Crate(Cell* newCell, int _type) {
 	cell = newCell;
 	type = _type;
 }

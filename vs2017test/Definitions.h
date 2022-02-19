@@ -9,7 +9,7 @@ const int WHITE = 6;
 const int TEAM1 = 7;
 const int TEAM2 = 8;
 const int AMMO = 9;
-const int HP = 10;
+const int HEALTH = 10;
 
 const int MSZ = 100;
 const int TEAM_SIZE = 3;

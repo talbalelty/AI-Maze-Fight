@@ -1,7 +1,7 @@
 #include "Player.h"
 
 Player::Player() {
-	health = 10;
+	health = MAX_HEALTH;
 	bulletAmmo = 10;
 	grenadeAmmo = 2;
 }
@@ -12,7 +12,7 @@ Player::Player(Cell* newCell, bool _isFighter, int _color) {
 	grenadeAmmo = 2;
 	cell = newCell;
 	isFighter = _isFighter;
-	color = _color;
+	team = _color;
 }
 
 Player::~Player() {
@@ -26,7 +26,7 @@ int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
 	{
 		return DEAD;
 	}
-	if (health <= 2 || (bulletAmmo == 0  && grenadeAmmo == 0))
+	if (health <= MINIMUM_HEALTH || (bulletAmmo == 0 || grenadeAmmo == 0))
 	{
 		return SURVIVE;
 	}
@@ -38,15 +38,14 @@ int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
 		int playerRoom = getRoomNumber(rooms);
 		int opponentRoom = opponent->getRoomNumber(rooms);
 		bool isInSameRoom = playerRoom == opponentRoom;
-		bool isInFightDistance = distance <= DISTANCE_TO_TARGET && isInSameRoom;
-		if (isInFightDistance)
+		bool isInFightDistance = distance <= DISTANCE_TO_TARGET;
+		if (isInSameRoom && isInFightDistance)
 		{
 			return FIGHT;
 		} 
 		// Player will HOLD
-		bool isInCorridor = playerRoom != -1 && opponentRoom == -1;
-		bool isInHoldDistance = distance <= DISTANCE_TO_TARGET && isInCorridor;
-		if (isInHoldDistance)
+		bool isInCorridor = opponentRoom == -1;
+		if (isInCorridor && distance < DISTANCE_TO_TARGET)
 		{
 			// TODO - Find a better solution to hold condition!
 			return HOLD;
@@ -80,4 +79,24 @@ int Player::getRoomNumber(Room* rooms[NUM_ROOMS]) {
 void Player::restockAmmo() {
 	bulletAmmo += 5;
 	grenadeAmmo += 1;
+}
+
+int Player::getSupportType() {
+	if (health <= MINIMUM_HEALTH)
+	{
+		return HEALTH;
+	}
+	if (bulletAmmo == 0 || grenadeAmmo == 0)
+	{
+		return AMMO;
+	}
+	return -1;
+}
+
+void Player::heal() {
+	health += 5;
+	if (health > MAX_HEALTH)
+	{
+		health = MAX_HEALTH;
+	}
 }

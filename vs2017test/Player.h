@@ -4,6 +4,7 @@
 #include <math.h>
 #include <vector>
 #include "Bullet.h"
+#include "Definitions.h"
 
 #define WALK 0
 #define FIGHT 1
@@ -11,6 +12,8 @@
 #define DEAD 3
 #define HOLD 4
 #define DISTANCE_TO_TARGET 10
+#define MINIMUM_HEALTH 2
+#define MAX_HEALTH 10
 using namespace std;
 class Player
 {
@@ -19,7 +22,8 @@ private:
 	int health;
 	int grenadeAmmo;
 	int bulletAmmo;
-	int color;
+	int crateType;
+	int team;
 	bool isFighter;
 	vector<Bullet*> bullets;
 public:
@@ -39,6 +43,10 @@ public:
 	int getGrenadeAmmo() { return grenadeAmmo; }
 	void throwGrenade() { grenadeAmmo--; }
 	void restockAmmo();
-	void heal() { health += 5; }
-	int getColor() { return color; }
+	void heal();
+	int getTeam() { return team; }
+	int getSupportType();
+	int getHealth() { return health; }
+	int getCrateType() { return crateType; }
+	void setCrateType(int _crateType) { crateType = _crateType; }
 };

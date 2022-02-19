@@ -5,9 +5,11 @@
 class Crate {
 private:
 	Cell* cell;
-	bool type; // 0 = health, 1 = ammo
+	int type; // 0 = health, 1 = ammo
 public:
 	Crate();
-	Crate(Cell *newCell, bool type);
+	Crate(Cell *newCell, int type);
 	~Crate();
+	Cell* getCell() { return cell; }
+	int getType() { return type; }
 };

@@ -10,6 +10,10 @@
 #include "Grenade.h"
 #include "Arena.h"
 
+// Oded Nir - 205985948
+// Tal Balelty - 312270291
+// Daniel Wurms - 205681760
+
 using namespace std;
 
 Room* rooms[NUM_ROOMS];

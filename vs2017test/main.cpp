@@ -74,9 +74,6 @@ bool hasOverlapping(int index, int w, int h, int crow, int ccol)
 	return overlap;
 }
 
-/// <summary>
-/// figure out how to fix obstacles and tunnels
-/// </summary>
 void InitRooms()
 {
 	int crow, ccol, w, h;
@@ -112,14 +109,13 @@ void InitMaze()
 
 void RestorePath(Cell* pCurrent, int start_row, int start_col)
 {
-
-	//	while (!(current.getRow() == start_row && current.getCol() == start_col))
 	while (pCurrent->getParent() != nullptr)
 	{
 		if (maze[pCurrent->getRow()][pCurrent->getCol()] == WALL) {
 			maze[pCurrent->getRow()][pCurrent->getCol()] = SPACE;
 			maze[pCurrent->getRow()][pCurrent->getCol() + 1] = SPACE;
 			maze[pCurrent->getRow() + 1][pCurrent->getCol()] = SPACE;
+			maze[pCurrent->getRow()+1][pCurrent->getCol() + 1] = SPACE;
 		}
 		pCurrent = pCurrent->getParent();
 	}
@@ -254,7 +250,6 @@ void DigTunnels()
 		for (j = i + 1; j < NUM_ROOMS; j++)
 		{
 			DigPath(i, j); // A*
-			cout << "The path from room " << i << " to room " << j << " has been digged\n";
 		}
 }
 
@@ -311,90 +306,31 @@ void CreateSecurityMap()
 		g->SimulateExplosion(maze, security_map, damage);
 	}
 }
-//void display(void)
-//{
-//	static const double ticks_per_second = 60.0; // or whatever
-//	static int last;
-//	int now = glutGet(GLUT_ELAPSED_TIME);
-//	int tick = (int)floor(now * ticks_per_second / 1000);
-//	if (!last)
-//		last = tick - 1;
-//	for (; last < tick; last++)
-//		update();
-//	draw();
-//	glutPostRedisplay();
-//}
+
 void display()
 {
 	glClear(GL_COLOR_BUFFER_BIT); // clean frame buffer
 
 	ShowMaze();
 
-	// show bullet
-	//if (pb != nullptr)
-	//{
-	//	pb->show();
-	//}
-
-	//// show grenade
-	//if (pg != nullptr)
-	//{
-	//	pg->show();
-	//}
-
-	arena->show();
+	arena->show(); // show flying bullets over the map
 
 	glutSwapBuffers(); // show all
 }
 
-
-
 // runs all the time in the background
 void idle()
 {
-	if (pb && pb->getIsFired())
-		pb->move(maze);
-	if (pg && pg->getIsExploded())
-		pg->explode(maze);
-
-	// if something iteration()
-
-	arena->iteration();
-	Sleep(200);
+	if (arena->getWinnerTeam() == 0)
+	{
+		Sleep(20);
+		arena->iteration();
+	}
 	glutPostRedisplay(); // indirect call to display
 }
 
-void menu(int choice)
-{
-	if (choice == 1) // fire bullet
-	{
-		pb->setIsFired(true);
-	}
-	else if (choice == 2) // explode grenade
-	{
-		pg->setIsExploded(true);
-	}
-	else if (choice == 3) //Create Security Map
-	{
-		CreateSecurityMap();
-	}
 
-}
 
-void mouse(int button, int state, int x, int y)
-{
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
-	{
-		// place bullet in position (x,y)
-		double xx, yy;
-		xx = MSZ * (x / 600.0);
-		yy = MSZ * ((600 - y) / 600.0);
-
-		//		pb = new Bullet(xx, yy);
-		pg = new Grenade(xx, yy);
-
-	}
-}
 
 void main(int argc, char* argv[])
 {
@@ -405,15 +341,6 @@ void main(int argc, char* argv[])
 	glutCreateWindow("Dungeon");
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
-	glutMouseFunc(mouse);
-	// add menu
-	glutCreateMenu(menu);
-	glutAttachMenu(GLUT_RIGHT_BUTTON);
-	glutAddMenuEntry("Fire bullet", 1);
-	glutAddMenuEntry("Explode Grenade", 2);
-	glutAddMenuEntry("Create Security Map", 3);
-
-
 
 	init();
 

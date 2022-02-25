@@ -14,7 +14,9 @@
 #define DISTANCE_TO_TARGET 10
 #define MINIMUM_HEALTH 2
 #define MAX_HEALTH 10
+
 using namespace std;
+
 class Player
 {
 private:

@@ -4,6 +4,7 @@ Arena::Arena(int(*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS], double(*_securit
 	maze = _maze;
 	rooms = _rooms;
 	security_map = _security_map;
+	winnerTeam = 0;
 	initCrates();
 	initTeams();
 }
@@ -42,12 +43,6 @@ void Arena::initCrates() {
 	}
 }
 
-/// <summary>
-/// check to see if runs
-/// </summary>
-/// <param name="player"></param>
-/// <param name="team"></param>
-/// <returns></returns>
 Player* Arena::findOpponent(Player* player, vector<Player*> team) {
 	Cell* playerCell = player->getCell();
 	Player* opp = nullptr;
@@ -73,6 +68,9 @@ Player* Arena::findOpponent(Player* player, vector<Player*> team) {
 	return opp;
 }
 
+/// <summary>
+/// For bullets flying over the map
+/// </summary>
 void Arena::show() {
 	Player* opponent = nullptr;
 	for (size_t i = 0; i < TEAM_SIZE; i++)
@@ -94,22 +92,41 @@ void Arena::show() {
 }
 
 void Arena::iteration() {
-	// for TEAM_SIZE - each iteration calls playerStance for each player. 6 calls total.
+	int alive = TEAM_SIZE - 1;
 	Player* opponent = nullptr;
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
+		if (team1[i]->getHealth() <= 0)
+		{
+			alive--;
+		}
 		opponent = findOpponent(team1[i], team2);
 		if (opponent) {
 			playerAction(team1[i], opponent);
 		}
 	}
+	if (alive == 0)
+	{
+		cout << "Team 2 Wins" << endl;
+		winnerTeam = 2;
+	}
+	alive = TEAM_SIZE - 1;
 	for (size_t i = 0; i < TEAM_SIZE; i++)
 	{
+		if (team2[i]->getHealth() <= 0)
+		{
+			alive--;
+		}
 		opponent = findOpponent(team2[i], team1);
 		if (opponent)
 		{
 			playerAction(team2[i], opponent);
 		}
+	}
+	if (alive == 0)
+	{
+		cout << "Team 1 Wins" << endl;
+		winnerTeam = 1;
 	}
 }
 
@@ -126,6 +143,7 @@ void Arena::playerAction(Player* player, Player* opponent) {
 			break;
 		case FIGHT:
 			fight(player, opponent);
+			(*maze)[row][col] = player->getTeam();
 			break;
 		case SURVIVE:
 			survive(player);
@@ -133,22 +151,24 @@ void Arena::playerAction(Player* player, Player* opponent) {
 		case HOLD:
 			break;
 		case DEAD:
-			(*maze)[row][col] = SPACE;
+			if ((*maze)[row][col] != SPACE)
+			{
+				(*maze)[row][col] = SPACE;
+			}
 			break;
 		default: // DEAD
 			break;
 		}
 	}
-	else {
+	else if(crates.size() > 0){
 		support(player);
 	}
+	else {
+		cout << "Draw" << endl;
+		winnerTeam = 3;
+	}
 }
-/// <summary>
-/// players disapear after first step.
-///	loop starts without support action, need to start from 0.
-/// </summary>
-/// <param name="player"></param>
-/// <param name="opponent"></param>
+
 void Arena::walk(Player* player, Player* opponent) {
 	startAStar = true;
 	Cell* oldCell = player->getCell();
@@ -169,6 +189,11 @@ void Arena::walk(Player* player, Player* opponent) {
 	player->setCell(newCell);
 }
 
+/// <summary>
+/// For support player only
+/// </summary>
+/// <param name="support"></param>
+/// <param name="crate"></param>
 void Arena::walk(Player* support, Crate* crate) {
 	startAStar = true;
 	Cell* oldCell = support->getCell();
@@ -214,11 +239,17 @@ void Arena::fight(Player* player, Player* opponent) {
 void Arena::survive(Player* player) {
 	if (player->getTeam() == TEAM1)
 	{
-		walk(player, team1[0]);
+		if (player->getCell()->ManhattanDistance(team1[0]->getCell()->getRow(), team1[0]->getCell()->getRow()) > 2)
+		{
+			walk(player, team1[0]);
+		}
 	}
 	else
 	{
-		walk(player, team2[0]);
+		if (player->getCell()->ManhattanDistance(team2[0]->getCell()->getRow(), team2[0]->getCell()->getRow()) > 2)
+		{
+			walk(player, team2[0]);
+		}
 	}
 }
 
@@ -231,7 +262,6 @@ void Arena::support(Player* support) {
 	{
 		supportIfNeeded(team2);
 	}
-	// if support is needed use A* with ammo, health, or player targets
 }
 
 void Arena::supportIfNeeded(vector<Player*> team) {
@@ -326,11 +356,6 @@ void Arena::cleanCrate(int index) {
 	crates.erase(crates.begin() + index);
 }
 
-/// <summary>
-/// Impove line of fire to be centered
-/// </summary>
-/// <param name="player"></param>
-/// <param name="opponent"></param>
 void Arena::moveBullets(Player* player, Player* opponent) {
 	vector<Bullet*> bullets = player->getBullets();
 
@@ -370,7 +395,7 @@ Cell* Arena::AStarIteration(Cell* target, int targetColor) {
 
 	// Check the neighbors of pCurrent and pick the white ones to add to the priority queue
 	// UP
-	if (startAStar) {// can be diplicate targetcolor
+	if (startAStar) {
 		if (row + 1 < MSZ && ((*maze)[row + 1][col] == SPACE || (*maze)[row + 1][col] == targetColor)) {
 			newPosition = CheckNeighbor(pCurrent, row + 1, col, target, targetColor);
 		}
@@ -398,7 +423,7 @@ Cell* Arena::AStarIteration(Cell* target, int targetColor) {
 
 // Row and col belong to the neighboring cells
 Cell* Arena::CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int targetColor) {
-	if ((*maze)[row][col] == targetColor) // Only Monsters enter here, Pacman handles stopping condition in pacmanStep function
+	if ((*maze)[row][col] == targetColor)
 	{
 		startAStar = false;
 		return RestorePath(pCurrent);
@@ -407,13 +432,7 @@ Cell* Arena::CheckNeighbor(Cell* pCurrent, int row, int col, Cell* target, int t
 	{
 		(*maze)[row][col] = GRAY;
 		Cell* c = new Cell(row, col, pCurrent);
-		// Pacman is using the negative distance to get the farthest point in the top of the pq.
-		// Then, summing with the function G which is the number of cells to travel in the path.
 		c->computeH(target);
-		//if (pacmanTurn)
-		//{
-		//	c->setH(-(c->getH()));
-		//}
 		c->setG(pCurrent->getG() + 1 + (*security_map)[row][col]);
 		c->setF();
 		pq.push(c);

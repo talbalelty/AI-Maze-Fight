@@ -1,5 +1,4 @@
 #include "Bullet.h"
-//#include <stdlib.h>
 #include <math.h>
 #include "glut.h"
 
@@ -37,10 +36,6 @@ Bullet::~Bullet()
 {
 }
 
-/// <summary>
-/// TODO : figure out how characters take damage from bullets
-/// </summary>
-/// <param name="maze"></param>
 void Bullet::move(int maze[MSZ][MSZ])
 {
 	// check that current x,y is in SPACE otherwise stop moving bullet
@@ -67,7 +62,7 @@ void Bullet::show(int playerColor)
 		glColor3d(0, 1, 0); // green
 	} 
 	else {
-		glColor3d(0, 1, 1); // yellow
+		glColor3d(0, 1, 1); // light blue
 	}
 	glBegin(GL_POLYGON);
 		glVertex2d(x, y + 0.5);

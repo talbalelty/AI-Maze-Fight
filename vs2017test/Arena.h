@@ -27,8 +27,8 @@ private:
 	vector<Player*> team1;
 	vector<Player*> team2;
 	vector<Crate*> crates;
-	int opponents[TEAM_SIZE];
 	bool startAStar = false;
+	int winnerTeam;
 public:
 	Arena(int(*_maze)[MSZ][MSZ], Room* (*_rooms)[NUM_ROOMS], double(*_security_map)[MSZ][MSZ]);
 	void initTeams();
@@ -50,4 +50,5 @@ public:
 	void show();
 	int findCrate(Player* support, vector<Crate*> crates, int type);
 	void cleanCrate(int index);
+	int getWinnerTeam() { return winnerTeam; }
 };

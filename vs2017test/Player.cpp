@@ -37,17 +37,15 @@ int Player::getState(Player* opponent, Room* rooms[NUM_ROOMS]) {
 		double distance = sqrt(pow(oppCol - col, 2) + pow(oppRow - row, 2));
 		int playerRoom = getRoomNumber(rooms);
 		int opponentRoom = opponent->getRoomNumber(rooms);
-		bool isInSameRoom = playerRoom == opponentRoom;
-		bool isInFightDistance = distance <= DISTANCE_TO_TARGET;
-		if (isInSameRoom && isInFightDistance)
+		bool isInSameRoom = playerRoom != -1 && opponentRoom != -1 && playerRoom == opponentRoom;
+		if (isInSameRoom || distance <= 2)
 		{
 			return FIGHT;
 		} 
 		// Player will HOLD
-		bool isInCorridor = opponentRoom == -1;
-		if (isInCorridor && distance < DISTANCE_TO_TARGET)
+		bool isOpponentInCorridor = opponentRoom == -1;
+		if (isOpponentInCorridor && !(playerRoom == -1 && opponentRoom == -1))
 		{
-			// TODO - Find a better solution to hold condition!
 			return HOLD;
 		}
 	}
@@ -68,6 +66,7 @@ int Player::getRoomNumber(Room* rooms[NUM_ROOMS]) {
 		w = room.getW() / 2;
 		inRow = (centerRow - h <= cell->getRow()) && (cell->getRow() <= centerRow + h);
 		inCol = (centerCol - w <= cell->getCol()) && (cell->getCol() <= centerCol + w);
+		
 		if (inRow && inCol)
 		{
 			return i;
